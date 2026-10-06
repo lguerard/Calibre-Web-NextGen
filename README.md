@@ -828,7 +828,7 @@ The interface ships with the locales below. Completion is auto-refreshed on ever
 | Language | Completion | Strings | Fuzzy |
 |---|---|---:|---:|
 | English (source) | 100% | source | — |
-| Russian (`ru`) | `██████████████████░░` 88% | 3546/4048 | 0 |
+| Russian (`ru`) | `██████████████████░░` 92% | 3730/4048 | 0 |
 | French (`fr`) | `█████████████████░░░` 87% | 3514/4048 | 123 |
 | Slovak (`sk`) | `█████████████████░░░` 83% | 3377/4048 | 0 |
 | Swedish (`sv`) | `████████████████░░░░` 81% | 3293/4048 | 0 |

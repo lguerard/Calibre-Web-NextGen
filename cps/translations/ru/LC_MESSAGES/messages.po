@@ -825,8 +825,8 @@ msgid ""
 "https://your-domain.com)"
 msgstr ""
 "В поле «Хост перенаправления OAuth» не следует указывать путь. Используйте "
-"только базовый URL (например, [https://your-domain.com](https://your-"
-"domain.com))"
+"только базовый URL (например, [https://your-domain.com](https://your-domain."
+"com))"
 
 #: cps/admin.py
 msgid "Password length has to be between 1 and 40"
@@ -5818,10 +5818,6 @@ msgid "Checking…"
 msgstr "Проверка…"
 
 #: cps/spa_strings.py
-msgid "Choose a SABnzbd connection"
-msgstr "Выберите подключение SABnzbd"
-
-#: cps/spa_strings.py
 msgid "Choose a cover"
 msgstr "Выбрать обложку"
 
@@ -5916,8 +5912,8 @@ msgid "Compact"
 msgstr "Компактно"
 
 #: cps/spa_strings.py
-msgid "Completed folder as SABnzbd sees it"
-msgstr "Папка завершённых загрузок, как её видит SABnzbd"
+msgid "Completed folder as the download client sees it"
+msgstr ""
 
 #: cps/spa_strings.py
 msgid "Configuration"
@@ -8887,32 +8883,8 @@ msgid "Run time"
 msgstr "Время выполнения"
 
 #: cps/spa_strings.py
-msgid "SABnzbd category"
-msgstr "Категория SABnzbd"
-
-#: cps/spa_strings.py
-msgid ""
-"SABnzbd did not finish this download before the waiting limit. Check its "
-"queue before retrying."
-msgstr ""
-"SABnzbd не завершил эту загрузку до истечения времени ожидания. Проверьте "
-"его очередь перед повторной попыткой."
-
-#: cps/spa_strings.py
-msgid ""
-"SABnzbd did not report a completed folder and category that could be "
-"verified."
-msgstr ""
-"SABnzbd не сообщил о папке завершённых загрузок и категории, которые можно "
-"было бы проверить."
-
-#: cps/spa_strings.py
 msgid "SABnzbd download client"
 msgstr "Клиент загрузки SABnzbd"
-
-#: cps/spa_strings.py
-msgid "SABnzbd reported that this download failed."
-msgstr "SABnzbd сообщил, что эта загрузка завершилась ошибкой."
 
 #: cps/spa_strings.py
 msgid "SMTP server"
@@ -10085,16 +10057,12 @@ msgid "This catalog does not offer search."
 msgstr "Этот каталог не поддерживает поиск."
 
 #: cps/spa_strings.py
-msgid "This catalog is on my home or local network"
-msgstr "Этот каталог находится в моей домашней или локальной сети"
-
-#: cps/spa_strings.py
 msgid "This catalog page is empty."
 msgstr "Эта страница каталога пуста."
 
 #: cps/spa_strings.py
-msgid "This category does not exist in SABnzbd."
-msgstr "Эта категория не существует в SABnzbd."
+msgid "This category does not exist in the download client."
+msgstr ""
 
 #: cps/spa_strings.py
 msgid ""
@@ -10170,8 +10138,8 @@ msgstr ""
 #: cps/spa_strings.py
 msgid ""
 "This is this computer's own address, which the e-reader cannot reach. Choose "
-"Change and enter the address the e-reader can use, such as http://"
-"192.168.1.20:8083."
+"Change and enter the address the e-reader can use, such as "
+"http://192.168.1.20:8083."
 msgstr ""
 "Это собственный адрес этого компьютера, к которому читалка не может получить "
 "доступ. Выберите «Изменить» и введите адрес, который может использовать "
@@ -13955,9 +13923,9 @@ msgid ""
 msgstr ""
 "Необязательно. Без ключа для Google Books действует ограничение около 1000 "
 "запросов на IP-адрес в день, которое легко исчерпать на общих серверах "
-"(ошибка HTTP 429). Бесплатный ключ можно получить на [https://"
-"console.cloud.google.com](https://console.cloud.google.com) — включите "
-"«Books API» и создайте API-ключ."
+"(ошибка HTTP 429). Бесплатный ключ можно получить на [https://console.cloud."
+"google.com](https://console.cloud.google.com) — включите «Books API» и "
+"создайте API-ключ."
 
 #: cps/templates/config_edit.html
 msgid "Allow Reverse Proxy Authentication"
@@ -15325,9 +15293,9 @@ msgid ""
 "\">kindle-epub-fix.netlify.app</a> tool made by <a href=\"https://github.com/"
 "innocenat\">innocenat</a>."
 msgstr ""
-"Этот инструмент был адаптирован из утилиты <a href=\"https://kindle-epub-"
-"fix.netlify.app/\">kindle-epub-fix.netlify.app</a>, созданной <a "
-"href=\"https://github.com/innocenat\">innocenat</a>."
+"Этот инструмент был адаптирован из утилиты <a href=\"https://kindle-epub-fix."
+"netlify.app/\">kindle-epub-fix.netlify.app</a>, созданной <a href=\"https://"
+"github.com/innocenat\">innocenat</a>."
 
 #: cps/templates/cwa_settings.html
 msgid "Enable KOReader Sync (NextGen Plugin)"
@@ -15350,9 +15318,9 @@ msgid ""
 "container after disabling."
 msgstr ""
 "Примечание: Включение этой опции запускает службу фонового вычисления "
-"контрольных сумм при старте, что может временно заблокировать файл "
-"metadata.db. Чтобы остановить запущенный процесс, отключите опцию и "
-"перезапустите контейнер."
+"контрольных сумм при старте, что может временно заблокировать файл metadata."
+"db. Чтобы остановить запущенный процесс, отключите опцию и перезапустите "
+"контейнер."
 
 #: cps/templates/cwa_settings.html
 msgid "Enable Aggressive EPUB Fixer Mode (riskier)"
@@ -19240,6 +19208,38 @@ msgstr "Показывать выбранные полки в OPDS"
 msgid "Show Read/Unread Section"
 msgstr "Показать раздел прочитанного/непрочитанного"
 
+#~ msgid "Choose a SABnzbd connection"
+#~ msgstr "Выберите подключение SABnzbd"
+
+#~ msgid "Completed folder as SABnzbd sees it"
+#~ msgstr "Папка завершённых загрузок, как её видит SABnzbd"
+
+#~ msgid "SABnzbd category"
+#~ msgstr "Категория SABnzbd"
+
+#~ msgid ""
+#~ "SABnzbd did not finish this download before the waiting limit. Check its "
+#~ "queue before retrying."
+#~ msgstr ""
+#~ "SABnzbd не завершил эту загрузку до истечения времени ожидания. Проверьте "
+#~ "его очередь перед повторной попыткой."
+
+#~ msgid ""
+#~ "SABnzbd did not report a completed folder and category that could be "
+#~ "verified."
+#~ msgstr ""
+#~ "SABnzbd не сообщил о папке завершённых загрузок и категории, которые "
+#~ "можно было бы проверить."
+
+#~ msgid "SABnzbd reported that this download failed."
+#~ msgstr "SABnzbd сообщил, что эта загрузка завершилась ошибкой."
+
+#~ msgid "This catalog is on my home or local network"
+#~ msgstr "Этот каталог находится в моей домашней или локальной сети"
+
+#~ msgid "This category does not exist in SABnzbd."
+#~ msgstr "Эта категория не существует в SABnzbd."
+
 #~ msgid "Magic Shelves"
 #~ msgstr "Умные полки"
 
@@ -19846,9 +19846,9 @@ msgstr "Показать раздел прочитанного/непрочит�
 #~ "metadata.db при запуске. Если найдена только одна библиотека, она "
 #~ "монтируется автоматически; если найдено несколько, по умолчанию будет "
 #~ "смонтирована самая большая, а если ни одной нет, будет автоматически "
-#~ "создана и смонтирована новая. Для подробностей, <a href=\"https://"
-#~ "github.com/crocodilestick/Calibre-Web-Automated/wiki/"
-#~ "Configuration#database-configuration\">см. здесь</a>!"
+#~ "создана и смонтирована новая. Для подробностей, <a href=\"https://github."
+#~ "com/crocodilestick/Calibre-Web-Automated/wiki/Configuration#database-"
+#~ "configuration\">см. здесь</a>!"
 
 #~ msgid ""
 #~ "Therefore, when configuring your docker-compose file for CWA, <b>DO NOT "
