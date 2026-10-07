@@ -1,3 +1,10 @@
+### Fixed
+
+- **The Hardcover review buttons work again in French and Italian.** A
+  translated message containing an apostrophe ("Échec de l'application…")
+  broke the page's script, so "Select This Match", "Reject" and "Skip" did
+  nothing and sent no request.
+
 ### Added
 
 - **Admins can list every book that has no Hardcover ID, and see why.**
