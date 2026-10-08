@@ -4,6 +4,13 @@
   translated message containing an apostrophe ("Échec de l'application…")
   broke the page's script, so "Select This Match", "Reject" and "Skip" did
   nothing and sent no request.
+- **Reading progress reaches Hardcover for books matched without an
+  edition.** Books linked by the auto-fetch, the review page or a shelf
+  sync have no edition, hence no page count, so every push stopped at
+  "Hardcover user_book has no edition page count". The sync now picks an
+  edition with pages (the book's `hardcover-edition`, then Hardcover's
+  default e-book or physical edition, then the most shelved e-book), uses
+  it, and saves it on Hardcover.
 
 ### Added
 
