@@ -19,7 +19,7 @@ import type { TagConflict } from '../lib/queries';
 import type { EntityKind, ReadFilter, DiscoveryView } from '../lib/queries';
 import { apiPost, apiGet, ApiError, type Book, type AdvancedSearchParams } from '../lib/api';
 import { formatAuthors } from '../lib/authors';
-import { saveCatalog, loadCatalog } from '../lib/scrollCache';
+import { saveCatalog, loadCatalog, useCatalogCoverSnapshot } from '../lib/scrollCache';
 import { useLibraryRevision } from '../lib/libraryRevision';
 import { useNamedPreference } from '../lib/useNamedPreference';
 import { usePersistentChoice } from '../lib/usePersistentChoice';
@@ -124,6 +124,8 @@ const DENSITY_OPTIONS = [
 ] as const;
 
 interface CatalogProps {
+  /** A configured synthetic built-in tag group; never an editable tag ID. */
+  tagPath?: string;
   /** When set, the catalog is scoped to books linked to this entity. */
   entityKind?: EntityKind;
   entityId?: string | number;
@@ -235,7 +237,7 @@ function useLibraryRefresh() {
   return { isRefreshing, message, error, refresh };
 }
 
-export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogProps) {
+export function Catalog({ entityKind, entityId, view, defaultFilter, tagPath }: CatalogProps) {
   const me = useMe().data;
   const discoverSource = useDiscoverSource(view === 'discover');
   const discoverIdentity = view === 'discover' ? `${discoverSource.data?.source ?? ''}:${discoverSource.data?.available ?? ''}` : '';
@@ -263,18 +265,19 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
   const [tagDeleteError, setTagDeleteError] = useState('');
   // Series views expose two extra series-order options and default to ascending
   // series order so the list reads 1, 2, 3… instead of newest-first (#573).
-  const sortOptions = isSeries ? [...SERIES_SORT_OPTIONS, ...SORT_OPTIONS] : SORT_OPTIONS;
+  const readerSorts = SORT_OPTIONS.filter(option => !option.value.startsWith('rating') || (me && !me.role.anonymous));
+  const sortOptions = isSeries ? [...SERIES_SORT_OPTIONS, ...readerSorts] : readerSorts;
   // Library-only controls (search box, advanced link, read-status filter) are
   // hidden for both entity-scoped and discovery views.
-  const hideLibraryControls = filtered || isView;
+  const hideLibraryControls = filtered || isView || tagPath !== undefined;
   // The plain Library tab — the only view whose sort/read-filter is persisted (#640),
   // and therefore the only one that opens on Recent (bookSortOptions).
-  const isPlainLibrary = !filtered && !isView;
+  const isPlainLibrary = !filtered && !isView && tagPath === undefined;
   const defaultSort = defaultCatalogSort({ isSeries, isPlainLibrary });
 
   // Scroll/state restoration (#578): identity of THIS catalog instance (library
   // vs a specific entity vs a discovery view) — stable across a book → Back trip.
-  const restoreKey = `catalog:${libraryScope}:${entityKind ?? ''}:${entityId ?? ''}:${view ?? ''}`;
+  const restoreKey = `catalog:${libraryScope}:${entityKind ?? ''}:${entityId ?? ''}:${view ?? ''}:${encodeURIComponent(tagPath ?? '')}`;
   // Only restore a snapshot when it's consistent with the current URL query. A
   // fresh top-bar search navigates to /?q=… on the SAME library route; a stale
   // snapshot must not be rehydrated there or it would ignore the new search
@@ -283,7 +286,7 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
     typeof window !== 'undefined' ? window.location.search : '').get('q') || '';
   const rawSnap = loadCatalog(restoreKey);
   const snapRef = useRef(
-    (filtered || isView || (rawSnap?.search ?? '') === urlQAtMount) ? rawSnap : undefined);
+    (filtered || tagPath !== undefined || isView || (rawSnap?.search ?? '') === urlQAtMount) ? rawSnap : undefined);
   const snap = snapRef.current;
   // True only for this first restored mount — used to stop the reset/urlQ effects
   // from clobbering the rehydrated page/filters before the user does anything.
@@ -291,6 +294,25 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
 
   const [page, setPage] = useState(() => snap?.page ?? 1);
   const [allBooks, setAllBooks] = useState<Book[]>(() => snap?.books ?? []);
+  const [coverResetRevision, setCoverResetRevision] = useState(0);
+  const coverSnapshot = useCatalogCoverSnapshot(restoreKey);
+  const previousCoverSnapshot = useRef(coverSnapshot);
+  useEffect(() => {
+    const previous = previousCoverSnapshot.current;
+    previousCoverSnapshot.current = coverSnapshot;
+    if (previous === coverSnapshot) return;
+    if (!coverSnapshot) {
+      // The follow-up cover read failed. Rebuild this affected view rather
+      // than restoring a cover we know was changed but cannot reconcile.
+      setAllBooks([]);
+      setPage(1);
+      setCoverResetRevision((revision) => revision + 1);
+      return;
+    }
+    const covers = new Map(coverSnapshot.map((book) => [book.id, book.cover_url]));
+    setAllBooks((books) => books.map((book) => covers.has(book.id)
+      ? { ...book, cover_url: covers.get(book.id)! } : book));
+  }, [coverSnapshot]);
   const [searchInput, setSearchInput] = useState(() => snap?.searchInput ?? '');
   const [search, setSearch] = useState(() => snap?.search ?? '');
   const [sort, setSort] = useState(() =>
@@ -323,7 +345,7 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
   // navigation out of it, and the saved filter carries no free-text field to
   // intersect a search with anyway. Declared here because resetKey below is part
   // of the filter identity.
-  const filterActive = !!defaultFilter && !filtered && !isView && !search && !showingAll;
+  const filterActive = !!defaultFilter && !filtered && tagPath === undefined && !isView && !search && !showingAll;
 
   // Multi-select / bulk mode
   const [selecting, setSelecting] = useState(false);
@@ -521,13 +543,13 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
   const rawSearch = useSearch();
   const urlQ = new URLSearchParams(rawSearch).get('q') || '';
   useEffect(() => {
-    if (filtered || isView) return;
+    if (filtered || tagPath !== undefined || isView) return;
     // On the first restored mount, keep the rehydrated search rather than letting
     // the (empty) URL query clobber it (#578).
     if (restoringRef.current) return;
     setSearchInput(urlQ);
     setSearch(urlQ);
-  }, [urlQ, filtered, isView]);
+  }, [urlQ, filtered, isView, tagPath]);
 
   // Close the settings menu on outside-click / Escape.
   useEffect(() => {
@@ -635,7 +657,7 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
   // The saved default view is part of the filter identity: turning it on/off (or
   // saving a different one) changes which books belong here, so the accumulator
   // must reset rather than append the new set onto the old (#928).
-  const resetKey = [search, sort, readFilter, entityKind ?? '', entityId ?? '', view ?? '', perPage, showHidden,
+  const resetKey = [search, sort, readFilter, entityKind ?? '', entityId ?? '', view ?? '', encodeURIComponent(tagPath ?? ''), perPage, showHidden,
     filterActive ? JSON.stringify(defaultFilter) : '', libraryScope, discoverIdentity].join('|');
 
   const previousLibraryScope = useRef(libraryScope);
@@ -680,7 +702,7 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
   // so an edit elsewhere in the app knows whether it may patch a book in place
   // or has to let the view rebuild (#1169). Computed here because this is where
   // the knowledge lives.
-  const membershipFiltered = !!search || !!entityKind || !!view || filterActive;
+  const membershipFiltered = !!search || !!entityKind || tagPath !== undefined || !!view || filterActive;
   const persistRef = useRef({ page, books: allBooks, resetKey: accKeyRef.current, search, searchInput, sort, readFilter, membershipFiltered });
   persistRef.current = { page, books: allBooks, resetKey: accKeyRef.current, search, searchInput, sort, readFilter, membershipFiltered };
 
@@ -744,6 +766,7 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
     readFilter,
     entityKind,
     entityId,
+    tagPath,
     view,
     showHidden: !hideLibraryControls && showHidden,
     enabled: !filterActive && gridReady,
@@ -816,7 +839,7 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
   // A successful idempotent bulk action can refetch byte-identical data.
   // React Query keeps that object identity, but the cleared accumulator still
   // needs to consume the newly confirmed result.
-  }, [data, dataUpdatedAt, isPlaceholderData, resetKey]);
+  }, [data, dataUpdatedAt, isPlaceholderData, resetKey, coverResetRevision]);
 
   const total = data?.total ?? 0;
 
@@ -844,12 +867,13 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
         ids = result.ids;
       } else {
         const params = new URLSearchParams({ select_all: '1', sort });
+        if (tagPath !== undefined) params.set('tag_path', tagPath);
         if (search && !entityKind && !view) params.set('search', search);
         if (view) params.set('filter', view);
         else if (readFilter !== 'all') params.set('filter', readFilter);
         if (showHidden && !entityKind && !view) params.set('show_hidden', '1');
         if (entityKind && entityId !== undefined && entityId !== '') {
-          params.set(entityKind, String(entityId));
+          params.set(entityKind === 'rating' && me && !me.role.anonymous ? 'personal_rating' : entityKind, String(entityId));
         }
         const result = await apiGet<{ ids: number[] }>(`/api/v1/books?${params.toString()}`);
         ids = result.ids;
@@ -889,7 +913,7 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
     enabled: hasMore && !isFetching,
   });
 
-  const heading = isView
+  const heading = tagPath !== undefined ? tagPath : isView
     ? t(VIEW_OPTIONS[view!].label)
     : filtered
       ? entityFailed
@@ -1010,13 +1034,19 @@ export function Catalog({ entityKind, entityId, view, defaultFilter }: CatalogPr
           ? { source: 'advanced', params: { ...advParams } }
           : { source: 'catalog', params: {
               sort,
+              ...(tagPath !== undefined ? { tag_path: tagPath } : {}),
               ...(search && !entityKind && !view ? { search } : {}),
               ...(view ? { filter: view } : readFilter !== 'all' ? { filter: readFilter } : {}),
               ...(!hideLibraryControls && showHidden ? { show_hidden: '1' } : {}),
-              ...(entityKind && entityId !== undefined && entityId !== '' ? { [entityKind]: String(entityId) } : {}),
+              ...(entityKind && entityId !== undefined && entityId !== '' ? {
+                [entityKind === 'rating' && me && !me.role.anonymous ? 'personal_rating' : entityKind]: String(entityId),
+              } : {}),
             } }} />;
   return (
     <main ref={setCatalogNode} className={`${styles.container} ${selecting && selected.size > 0 ? styles.containerBulkActive : ''}`} data-testid="catalog-page">
+      {tagPath !== undefined && <Link href="/tags" className={styles.back}>
+        <ChevronLeft size={16} aria-hidden="true" focusable={false} />{t('Tags')}
+      </Link>}
       {filtered && (
         <Link href={`/${ENTITY_PLURAL[entityKind!]}`} className={styles.back}>
           <ChevronLeft size={16} />

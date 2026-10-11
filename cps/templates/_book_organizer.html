@@ -175,7 +175,9 @@
 {# index.html / search.html book lists. `page` is the route page key, `id` is the book_id param. #}
 {% macro books_list_organizer(page, id, order, query=none, multiselect=true, settings=true, can_delete=false, can_edit_public_shelf=false, shelves=none, custom_sort_columns=none) %}
 {% macro list_sort_url(key) -%}
-  {%- if page.startswith('cc_') -%}
+  {%- if page == 'tag_group' -%}
+    {{- url_for('web.tag_group', path=id, sort_param=key) -}}
+  {%- elif page.startswith('cc_') -%}
     {{- url_for('web.cc_category_list', column_id=page[3:]|int, category_path=id, sort_param=key) -}}
   {%- elif page == 'global_library' -%}
     {{- url_for('web.global_library', sort_param=key, search=global_search|default('')) -}}
@@ -285,6 +287,12 @@
     {% set opts = opts + custom_opts.items %}
   {% endif %}
 
+{% endif %}
+{% if current_user.is_authenticated and not current_user.is_anonymous and page != 'hot' %}
+  {% set opts = opts + [
+    {'key':'ratingdesc', 'icons':['glyphicon-star'], 'label':_('Your rating, highest first'), 'url':list_sort_url('ratingdesc')},
+    {'key':'ratingasc', 'icons':['glyphicon-star-empty'], 'label':_('Your rating, lowest first'), 'url':list_sort_url('ratingasc')},
+  ] %}
 {% endif %}
 {% if page == 'global_library' and recent_missing|default(false) %}
   {# This dedicated view always lists missing books newest first. #}

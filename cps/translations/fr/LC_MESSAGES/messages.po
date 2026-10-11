@@ -1563,7 +1563,8 @@ msgid "Calibre-Web NextGen Profile Picture Management (WIP)"
 msgstr ""
 
 #: cps/db.py cps/spa_strings.py cps/templates/config_edit.html
-#: cps/templates/config_view_edit.html cps/templates/email_edit.html cps/web.py
+#: cps/templates/config_view_edit.html cps/templates/email_edit.html
+#: cps/templates/tag_tree.html cps/web.py
 msgid "None"
 msgstr "Aucun"
 
@@ -2409,7 +2410,8 @@ msgstr "Livres classés par éditeur"
 
 #: cps/opds.py cps/render_template.py cps/spa_strings.py
 #: cps/templates/book_edit.html cps/templates/book_table.html
-#: cps/templates/cwa_settings.html cps/templates/search_form.html cps/web.py
+#: cps/templates/cwa_settings.html cps/templates/index.html
+#: cps/templates/search_form.html cps/templates/tag_tree.html cps/web.py
 msgid "Tags"
 msgstr "Étiquettes"
 
@@ -2485,6 +2487,16 @@ msgstr "Livres par %(name)s"
 #, python-format
 msgid "Books by %(name)s, including every sub-category"
 msgstr ""
+
+#: cps/api/browse.py cps/opds.py cps/web.py
+msgid "Tag hierarchy temporarily unavailable. Please try again."
+msgstr ""
+"La hiérarchie des étiquettes est temporairement indisponible. Veuillez "
+"réessayer."
+
+#: cps/opds.py
+msgid "All books in this tag group"
+msgstr "Tous les livres de ce groupe d’étiquettes"
 
 #: cps/opds.py
 #, python-brace-format
@@ -3891,6 +3903,11 @@ msgstr "Sommaire"
 #: cps/spa_strings.py
 msgid "Convert failed."
 msgstr "La conversion a échoué."
+
+#: cps/spa_strings.py
+#, python-brace-format
+msgid "{format} is ready."
+msgstr "Le fichier {format} est prêt."
 
 #: cps/spa_strings.py
 msgid "Convert to"
@@ -7725,7 +7742,7 @@ msgid "Loading reading positions…"
 msgstr "Chargement des positions de lecture…"
 
 #: cps/spa_strings.py cps/templates/book_review.html
-#: cps/templates/cover_picker.html
+#: cps/templates/cover_picker.html cps/templates/personal_rating.html
 msgid "Loading…"
 msgstr "Chargement…"
 
@@ -8619,10 +8636,6 @@ msgstr "Page précédente"
 msgid "Progress"
 msgstr "Avancement"
 
-#: cps/spa_strings.py cps/templates/_reader_lookup_banner.html
-msgid "Progress is not being saved."
-msgstr "La progression n’est pas enregistrée."
-
 #: cps/spa_strings.py
 msgid "Published after"
 msgstr "Publié après le"
@@ -8970,6 +8983,7 @@ msgid "Resume at {percent} from another device"
 msgstr "Reprendre à {percent} depuis un autre appareil"
 
 #: cps/spa_strings.py cps/templates/book_review.html
+#: cps/templates/personal_rating.html
 msgid "Retry"
 msgstr "Réessayer"
 
@@ -11212,6 +11226,45 @@ msgid "← Library"
 msgstr "← Bibliothèque"
 
 #: cps/spa_strings.py
+msgid "Add books"
+msgstr "Ajouter des livres"
+
+#: cps/spa_strings.py
+msgid "Add books to shelf"
+msgstr "Ajouter des livres à l’étagère"
+
+#: cps/spa_strings.py
+msgid "Add selected"
+msgstr "Ajouter la sélection"
+
+#: cps/spa_strings.py
+msgid "Could not add the selected books. Please try again."
+msgstr "Impossible d’ajouter les livres sélectionnés. Veuillez réessayer."
+
+#: cps/spa_strings.py
+msgid "Could not load books."
+msgstr "Impossible de charger les livres."
+
+#: cps/spa_strings.py
+msgid "On shelf"
+msgstr "Sur l’étagère"
+
+#: cps/spa_strings.py
+msgid "Search library"
+msgstr "Rechercher dans la bibliothèque"
+
+#: cps/spa_strings.py
+msgid "Search title, author, series…"
+msgstr "Rechercher un titre, un auteur, une série…"
+
+#: cps/spa_strings.py
+#, python-brace-format
+msgid "{failed} of {total} books could not be added. They remain selected."
+msgstr ""
+"{failed} livre(s) sur {total} n’ont pas pu être ajoutés. Ils restent "
+"sélectionnés."
+
+#: cps/spa_strings.py
 msgid ""
 "New accounts sync only selected shelves. If no books arrive, add books to a "
 "shelf and enable its e-reader sync mark. Uncheck this to sync your whole "
@@ -11507,6 +11560,10 @@ msgstr "Source indisponible"
 msgid "Save Discover source"
 msgstr "Enregistrer la source de découverte"
 
+#: cps/spa_strings.py
+msgid "Change Discover source"
+msgstr "Changer la source de découverte"
+
 #: cps/spa_strings.py cps/web.py
 msgid "Discover source saved."
 msgstr "Source de découverte enregistrée."
@@ -11770,6 +11827,14 @@ msgstr ""
 "Cette règle ne peut pas être modifiée ici. Elle sera conservée sauf si vous "
 "la supprimez."
 
+#: cps/spa_strings.py cps/templates/tag_tree.html
+msgid "All tags"
+msgstr "Toutes les étiquettes"
+
+#: cps/spa_strings.py
+msgid "Could not load tags. Please try again."
+msgstr "Impossible de charger les étiquettes. Veuillez réessayer."
+
 #: cps/spa_strings.py
 msgid "Allow completed DRM-free MOBI 6 books"
 msgstr "Autoriser les livres MOBI 6 terminés sans DRM"
@@ -11784,6 +11849,120 @@ msgstr ""
 "formats de téléversement du serveur doit également autoriser le MOBI. Les "
 "paramètres de conversion habituels s’appliquent ; sans conversion, le MOBI "
 "peut être téléchargé, mais ne peut pas être ouvert dans le lecteur Web."
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Could not load your rating."
+msgstr "Impossible de charger votre note."
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Could not save your rating."
+msgstr "Impossible d’enregistrer votre note."
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Household average"
+msgstr "Moyenne du foyer"
+
+#: cps/spa_strings.py cps/templates/detail.html
+#: cps/templates/library_rating.html
+msgid "Library rating"
+msgstr "Note de la bibliothèque"
+
+#: cps/spa_strings.py cps/templates/user_edit.html
+msgid ""
+"Off by default. Only opted-in ratings count, and names are never shown. If "
+"you are the only person sharing a rating for a book, the average is your "
+"score."
+msgstr ""
+"Désactivé par défaut. Seules les notes partagées avec accord explicite "
+"comptent, et les noms ne sont jamais affichés. Si vous êtes la seule "
+"personne à partager une note pour un livre, la moyenne est votre note."
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Save rating"
+msgstr "Enregistrer la note"
+
+#: cps/spa_strings.py cps/templates/user_edit.html
+msgid "Share my ratings in the household average"
+msgstr "Inclure mes notes dans la moyenne du foyer"
+
+#: cps/spa_strings.py cps/templates/user_edit.html
+msgid "Show library rating"
+msgstr "Afficher la note de la bibliothèque"
+
+#: cps/spa_strings.py
+msgid "Show the labelled Calibre score alongside your own rating."
+msgstr "Afficher la note Calibre, clairement identifiée, à côté de votre note."
+
+#: cps/api/browse.py cps/spa_strings.py cps/templates/personal_rating.html
+#: cps/web.py
+msgid "Unrated"
+msgstr "Non noté"
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Your rating"
+msgstr "Votre note"
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Your rating saved."
+msgstr "Votre note a été enregistrée."
+
+#: cps/spa_strings.py cps/templates/_book_organizer.html
+msgid "Your rating, highest first"
+msgstr "Votre note, de la plus élevée à la plus basse"
+
+#: cps/spa_strings.py cps/templates/_book_organizer.html
+msgid "Your rating, lowest first"
+msgstr "Votre note, de la plus basse à la plus élevée"
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid ""
+"Your score does not change the Calibre library rating. Sharing is off unless "
+"you opt in in your account."
+msgstr ""
+"Votre note ne modifie pas celle de la bibliothèque Calibre. Le partage reste "
+"désactivé tant que vous ne l’activez pas dans votre compte."
+
+#: cps/spa_strings.py
+#, python-brace-format
+msgid "{rating} out of 5"
+msgstr "{rating} sur 5"
+
+#: cps/spa_strings.py
+msgid "Your rating (stars)"
+msgstr "Votre note (étoiles)"
+
+#: cps/spa_strings.py cps/templates/email_edit.html
+msgid "eReader attachment filename template"
+msgstr "Modèle de nom de fichier joint pour la liseuse"
+
+#: cps/spa_strings.py cps/templates/email_edit.html
+#, python-brace-format
+msgid ""
+"Leave blank to keep the existing filename. Example: {series} #{series_index} "
+"- {title}. Fields include {title}, {authors}, {series} and {series_index}; "
+"the file extension is added automatically."
+msgstr ""
+"Laissez vide pour conserver le nom actuel. Exemple : {series} "
+"#{series_index} - {title}. Champs disponibles : {title}, {authors}, {series} "
+"et {series_index} ; l’extension est ajoutée automatiquement."
+
+#: cps/spa_strings.py cps/templates/email_edit.html
+#, python-brace-format
+msgid ""
+"Use {series:|(|) }{title} to omit the series prefix when no series is set."
+msgstr ""
+"Utilisez {series:|(|) }{title} pour omettre le préfixe lorsqu’aucune série "
+"n’est définie."
+
+#: cps/spa_strings.py cps/templates/tag_tree.html
+msgid "Choose a tag group to browse books from it and its subtags."
+msgstr ""
+"Choisissez un groupe d’étiquettes pour parcourir les livres de ce groupe et "
+"de ses sous-étiquettes."
+
+#: cps/tag_hierarchy.py
+msgid "Unnamed tag"
+msgstr "Étiquette sans nom"
 
 #: cps/tasks_status.py
 msgid "Waiting"
@@ -11870,6 +12049,11 @@ msgstr "Éditeur : '%(name)s'"
 #, python-format
 msgid "Series: %(serie)s"
 msgstr "Séries : %(serie)s"
+
+#: cps/web.py
+#, python-format
+msgid "Your rating: %(rating)s stars"
+msgstr "Votre note : %(rating)s étoiles"
 
 #: cps/web.py
 msgid "Rating: None"
@@ -12022,6 +12206,10 @@ msgstr "Erreur lors de l'affichage de l'étagère"
 #: cps/templates/admin.html cps/templates/cwa_stats_i18n.html cps/web.py
 msgid "Downloads"
 msgstr "Téléchargements"
+
+#: cps/web.py
+msgid "Your ratings"
+msgstr "Vos notes"
 
 #: cps/web.py
 msgid "File formats list"
@@ -12281,6 +12469,13 @@ msgstr ""
 #: cps/services/gmail.py
 msgid "Found no valid gmail.json file with OAuth information"
 msgstr "Aucun fichier gmail.json avec information OAuth valide trouvé"
+
+#: cps/services/mail_filename.py
+msgid ""
+"Use a valid attachment filename template with supported metadata fields."
+msgstr ""
+"Utilisez un modèle de nom de fichier joint valide avec les champs de "
+"métadonnées pris en charge."
 
 #: cps/services/opds_filename.py
 msgid "Conditional text needs both prefix and suffix separators."
@@ -17104,14 +17299,6 @@ msgstr "Retirer « %(title)s » de votre bibliothèque ?"
 msgid "It also leaves these shelves: %(shelves)s."
 msgstr "Il quitte également ces étagères : %(shelves)s."
 
-#: cps/templates/detail.html
-msgid "Rating updated"
-msgstr "Évaluation mise à jour"
-
-#: cps/templates/detail.html
-msgid "Rating cleared"
-msgstr "Évaluation effacée"
-
 #: cps/templates/detail.html cps/templates/listenmp3.html
 #, python-format
 msgid "Book %(index)s of %(range)s"
@@ -17651,6 +17838,14 @@ msgstr "Retour à l’accueil"
 #: cps/templates/http_error.html
 msgid "Logout User"
 msgstr "Déconnecter l’utilisateur"
+
+#: cps/templates/index.html
+msgid "Breadcrumb"
+msgstr "Fil d’Ariane"
+
+#: cps/templates/index.html
+msgid "Subtags"
+msgstr "Sous-étiquettes"
 
 #: cps/templates/index.html
 msgid "Subcategories"
@@ -18236,6 +18431,11 @@ msgstr "Ok"
 msgid "Calibre-Web NextGen eBook Catalog"
 msgstr "Catalogue de livres électroniques Calibre-Web Automated"
 
+#: cps/templates/personal_rating.html
+#, python-format
+msgid "%(rating)s out of 5"
+msgstr "%(rating)s sur 5"
+
 #: cps/templates/read.html
 msgid "epub Reader"
 msgstr "Lecteur ePub"
@@ -18507,8 +18707,16 @@ msgid "Exclude Extensions"
 msgstr "Exclure les extensions"
 
 #: cps/templates/search_form.html
+msgid "Your rating above"
+msgstr "Votre note supérieure à"
+
+#: cps/templates/search_form.html
 msgid "Rating Above"
 msgstr "Évaluation supérieure à"
+
+#: cps/templates/search_form.html
+msgid "Your rating below"
+msgstr "Votre note inférieure à"
 
 #: cps/templates/search_form.html
 msgid "Rating Below"
@@ -19327,6 +19535,15 @@ msgstr "Synchroniser les étagères sélectionnées avec Kobo"
 #: cps/templates/user_table.html
 msgid "Show Read/Unread Section"
 msgstr "Afficher la section Lu / Non lu"
+
+#~ msgid "Progress is not being saved."
+#~ msgstr "La progression n’est pas enregistrée."
+
+#~ msgid "Rating updated"
+#~ msgstr "Évaluation mise à jour"
+
+#~ msgid "Rating cleared"
+#~ msgstr "Évaluation effacée"
 
 #, fuzzy
 #~ msgid "Magic Shelves"
@@ -20650,3 +20867,6 @@ msgstr "Afficher la section Lu / Non lu"
 #~ msgstr ""
 #~ "Les livres doivent d'abord être archivés et l'appareil synchronisé avant "
 #~ "qu'un livre puisse être supprimé en tout sécurité."
+
+#~ msgid "Calibre library rating (1-10)"
+#~ msgstr "Note de la bibliothèque Calibre (1–10)"

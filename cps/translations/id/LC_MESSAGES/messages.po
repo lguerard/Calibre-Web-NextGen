@@ -1451,7 +1451,8 @@ msgid "Calibre-Web NextGen Profile Picture Management (WIP)"
 msgstr ""
 
 #: cps/db.py cps/spa_strings.py cps/templates/config_edit.html
-#: cps/templates/config_view_edit.html cps/templates/email_edit.html cps/web.py
+#: cps/templates/config_view_edit.html cps/templates/email_edit.html
+#: cps/templates/tag_tree.html cps/web.py
 msgid "None"
 msgstr "Tidak ada"
 
@@ -2260,7 +2261,8 @@ msgstr "Buku yang diurutkan menurut Penerbit"
 
 #: cps/opds.py cps/render_template.py cps/spa_strings.py
 #: cps/templates/book_edit.html cps/templates/book_table.html
-#: cps/templates/cwa_settings.html cps/templates/search_form.html cps/web.py
+#: cps/templates/cwa_settings.html cps/templates/index.html
+#: cps/templates/search_form.html cps/templates/tag_tree.html cps/web.py
 msgid "Tags"
 msgstr "Tag"
 
@@ -2337,6 +2339,14 @@ msgstr ""
 #, python-format
 msgid "Books by %(name)s, including every sub-category"
 msgstr ""
+
+#: cps/api/browse.py cps/opds.py cps/web.py
+msgid "Tag hierarchy temporarily unavailable. Please try again."
+msgstr "Hierarki tag untuk sementara tidak tersedia. Silakan coba lagi."
+
+#: cps/opds.py
+msgid "All books in this tag group"
+msgstr "Semua buku dalam grup tag ini"
 
 #: cps/opds.py
 #, python-brace-format
@@ -3643,6 +3653,11 @@ msgstr ""
 
 #: cps/spa_strings.py
 msgid "Convert failed."
+msgstr ""
+
+#: cps/spa_strings.py
+#, python-brace-format
+msgid "{format} is ready."
 msgstr ""
 
 #: cps/spa_strings.py
@@ -7305,7 +7320,7 @@ msgid "Loading reading positions…"
 msgstr ""
 
 #: cps/spa_strings.py cps/templates/book_review.html
-#: cps/templates/cover_picker.html
+#: cps/templates/cover_picker.html cps/templates/personal_rating.html
 msgid "Loading…"
 msgstr ""
 
@@ -8153,10 +8168,6 @@ msgstr ""
 msgid "Progress"
 msgstr "Kemajuan"
 
-#: cps/spa_strings.py cps/templates/_reader_lookup_banner.html
-msgid "Progress is not being saved."
-msgstr ""
-
 #: cps/spa_strings.py
 msgid "Published after"
 msgstr ""
@@ -8489,6 +8500,7 @@ msgid "Resume at {percent} from another device"
 msgstr ""
 
 #: cps/spa_strings.py cps/templates/book_review.html
+#: cps/templates/personal_rating.html
 msgid "Retry"
 msgstr ""
 
@@ -10523,6 +10535,43 @@ msgid "← Library"
 msgstr ""
 
 #: cps/spa_strings.py
+msgid "Add books"
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Add books to shelf"
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Add selected"
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Could not add the selected books. Please try again."
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Could not load books."
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "On shelf"
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Search library"
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Search title, author, series…"
+msgstr ""
+
+#: cps/spa_strings.py
+#, python-brace-format
+msgid "{failed} of {total} books could not be added. They remain selected."
+msgstr ""
+
+#: cps/spa_strings.py
 msgid ""
 "New accounts sync only selected shelves. If no books arrive, add books to a "
 "shelf and enable its e-reader sync mark. Uncheck this to sync your whole "
@@ -10793,6 +10842,10 @@ msgstr ""
 msgid "Save Discover source"
 msgstr ""
 
+#: cps/spa_strings.py
+msgid "Change Discover source"
+msgstr ""
+
 #: cps/spa_strings.py cps/web.py
 msgid "Discover source saved."
 msgstr ""
@@ -11027,6 +11080,14 @@ msgstr ""
 msgid "This rule cannot be edited here. It will be kept unless you remove it."
 msgstr ""
 
+#: cps/spa_strings.py cps/templates/tag_tree.html
+msgid "All tags"
+msgstr "Semua tag"
+
+#: cps/spa_strings.py
+msgid "Could not load tags. Please try again."
+msgstr "Tag tidak dapat dimuat. Silakan coba lagi."
+
 #: cps/spa_strings.py
 msgid "Allow completed DRM-free MOBI 6 books"
 msgstr ""
@@ -11037,6 +11098,109 @@ msgid ""
 "also allow MOBI. Normal conversion settings apply; without conversion, MOBI "
 "can be downloaded but cannot be opened in the web reader."
 msgstr ""
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Could not load your rating."
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Could not save your rating."
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Household average"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/detail.html
+#: cps/templates/library_rating.html
+msgid "Library rating"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/user_edit.html
+msgid ""
+"Off by default. Only opted-in ratings count, and names are never shown. If "
+"you are the only person sharing a rating for a book, the average is your "
+"score."
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Save rating"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/user_edit.html
+msgid "Share my ratings in the household average"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/user_edit.html
+msgid "Show library rating"
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Show the labelled Calibre score alongside your own rating."
+msgstr ""
+
+#: cps/api/browse.py cps/spa_strings.py cps/templates/personal_rating.html
+#: cps/web.py
+msgid "Unrated"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Your rating"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid "Your rating saved."
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/_book_organizer.html
+msgid "Your rating, highest first"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/_book_organizer.html
+msgid "Your rating, lowest first"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/personal_rating.html
+msgid ""
+"Your score does not change the Calibre library rating. Sharing is off unless "
+"you opt in in your account."
+msgstr ""
+
+#: cps/spa_strings.py
+#, python-brace-format
+msgid "{rating} out of 5"
+msgstr ""
+
+#: cps/spa_strings.py
+msgid "Your rating (stars)"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/email_edit.html
+msgid "eReader attachment filename template"
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/email_edit.html
+#, python-brace-format
+msgid ""
+"Leave blank to keep the existing filename. Example: {series} #{series_index} "
+"- {title}. Fields include {title}, {authors}, {series} and {series_index}; "
+"the file extension is added automatically."
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/email_edit.html
+#, python-brace-format
+msgid ""
+"Use {series:|(|) }{title} to omit the series prefix when no series is set."
+msgstr ""
+
+#: cps/spa_strings.py cps/templates/tag_tree.html
+msgid "Choose a tag group to browse books from it and its subtags."
+msgstr ""
+"Pilih grup tag untuk menelusuri buku dari grup tersebut dan subtag-nya."
+
+#: cps/tag_hierarchy.py
+msgid "Unnamed tag"
+msgstr "Tag tanpa nama"
 
 #: cps/tasks_status.py
 msgid "Waiting"
@@ -11121,6 +11285,11 @@ msgstr "Penerbit: %(name)s"
 #, python-format
 msgid "Series: %(serie)s"
 msgstr "Seri: %(serie)s"
+
+#: cps/web.py
+#, python-format
+msgid "Your rating: %(rating)s stars"
+msgstr ""
 
 #: cps/web.py
 msgid "Rating: None"
@@ -11278,6 +11447,10 @@ msgstr "Kesalahan menghapus Rak"
 #: cps/templates/admin.html cps/templates/cwa_stats_i18n.html cps/web.py
 msgid "Downloads"
 msgstr "Unduhan"
+
+#: cps/web.py
+msgid "Your ratings"
+msgstr ""
 
 #: cps/web.py
 msgid "File formats list"
@@ -11523,6 +11696,11 @@ msgstr ""
 #: cps/services/gmail.py
 msgid "Found no valid gmail.json file with OAuth information"
 msgstr "Tidak ditemukan berkas gmail.json yang valid dengan informasi OAuth"
+
+#: cps/services/mail_filename.py
+msgid ""
+"Use a valid attachment filename template with supported metadata fields."
+msgstr ""
 
 #: cps/services/opds_filename.py
 msgid "Conditional text needs both prefix and suffix separators."
@@ -16126,16 +16304,6 @@ msgstr ""
 msgid "It also leaves these shelves: %(shelves)s."
 msgstr ""
 
-#: cps/templates/detail.html
-#, fuzzy
-msgid "Rating updated"
-msgstr "Pengaturan Basis Data diperbarui"
-
-#: cps/templates/detail.html
-#, fuzzy
-msgid "Rating cleared"
-msgstr "Peringkat Diatas"
-
 #: cps/templates/detail.html cps/templates/listenmp3.html
 #, python-format
 msgid "Book %(index)s of %(range)s"
@@ -16665,6 +16833,14 @@ msgstr "Kembali ke Beranda"
 #: cps/templates/http_error.html
 msgid "Logout User"
 msgstr "Keluar Pengguna"
+
+#: cps/templates/index.html
+msgid "Breadcrumb"
+msgstr "Jalur navigasi"
+
+#: cps/templates/index.html
+msgid "Subtags"
+msgstr "Subtag"
 
 #: cps/templates/index.html
 msgid "Subcategories"
@@ -17248,6 +17424,11 @@ msgstr "Ok"
 msgid "Calibre-Web NextGen eBook Catalog"
 msgstr "Katalog eBook Calibre-Web"
 
+#: cps/templates/personal_rating.html
+#, python-format
+msgid "%(rating)s out of 5"
+msgstr ""
+
 #: cps/templates/read.html
 msgid "epub Reader"
 msgstr "Pembaca EPUB"
@@ -17522,8 +17703,16 @@ msgid "Exclude Extensions"
 msgstr "Kecualikan Ekstensi"
 
 #: cps/templates/search_form.html
+msgid "Your rating above"
+msgstr ""
+
+#: cps/templates/search_form.html
 msgid "Rating Above"
 msgstr "Peringkat Diatas"
+
+#: cps/templates/search_form.html
+msgid "Your rating below"
+msgstr ""
 
 #: cps/templates/search_form.html
 msgid "Rating Below"
@@ -18314,6 +18503,14 @@ msgstr "Sinkronkan Rak yang dipilih dengan Kob"
 #, fuzzy
 msgid "Show Read/Unread Section"
 msgstr "Tampilkan pilihan baca/belum dibaca"
+
+#, fuzzy
+#~ msgid "Rating updated"
+#~ msgstr "Pengaturan Basis Data diperbarui"
+
+#, fuzzy
+#~ msgid "Rating cleared"
+#~ msgstr "Peringkat Diatas"
 
 #, fuzzy
 #~ msgid "Magic Shelves"

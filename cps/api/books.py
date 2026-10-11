@@ -19,7 +19,7 @@ from sqlalchemy.sql.functions import coalesce
 from . import api_v1
 from .serializers import serialize_book_list_item, serialize_book_detail, serialize_custom_column_value
 from .. import (
-    calibre_db, config, constants, db, ub, isoLanguages, logger, user_library,
+    calibre_db, config, constants, db, ub, isoLanguages, logger, user_library, tag_hierarchy,
 )
 from ..annotations import count_user_annotations
 from ..cw_login import current_user
@@ -30,6 +30,7 @@ from ..helper import edit_book_read_status, canonical_read_status, \
     get_convert_options, get_kosync_progress_display, hot_books_page
 from ..sort_orders import BOOK_SORT_ORDERS, book_sort_order, viewer_id
 from ..sort_orders import RECENT_SORT
+from ..personal_ratings import PERSONAL_RATING_SORTS, personal_score, ratings_for_books
 from ..custom_column_sort import (resolve_magic_shelf_sort, custom_sort_options,
                                   load_configured_columns)
 from ..usermanagement import login_required_if_no_ano
@@ -68,6 +69,23 @@ class BookExportRequestError(Exception):
         self.message = message
         self.status = status
 
+
+def _personal_rating_param(value):
+    score = _strict_int(value, "Personal rating", optional=True)
+    if score is None:
+        return None
+    if score > 10:
+        raise BookExportRequestError('invalid_rating', 'Personal rating must be from 0 to 10', 400)
+    if _real_user_id() is None:
+        raise BookExportRequestError('unauthorized', 'You must be signed in', 401)
+    return score
+
+
+def _top_rated_filter():
+    uid = _real_user_id()
+    return (personal_score(uid) > 9 if uid is not None
+            else db.Books.ratings.any(db.Ratings.rating > 9))
+
 def _detail_custom_columns():
     """Classic-parity display definitions, degrading safely if DB metadata is unavailable.
 
@@ -105,7 +123,7 @@ def _original_filename(book_id):
 SORT_MAP = BOOK_SORT_ORDERS
 # Download-count ordering runs against app.db and is intentionally unavailable
 # to the metadata.db-backed generic list/filter queries below.
-_COMPATIBLE_BOOK_SORTS = frozenset((set(SORT_MAP) - {"hotasc", "hotdesc"}) | {RECENT_SORT})
+_COMPATIBLE_BOOK_SORTS = frozenset((set(SORT_MAP) - {"hotasc", "hotdesc"}) | {RECENT_SORT}) | PERSONAL_RATING_SORTS
 
 
 def _sort_context(requested_sort):
@@ -311,6 +329,17 @@ def _visible_shelves_by_book(book_ids):
     }
 
 
+def _optional_ratings_for_books(user_id, book_ids):
+    """Supplemental scores must not prevent reading an otherwise available book."""
+    try:
+        return ratings_for_books(ub.session, user_id, book_ids)
+    except SQLAlchemyError:
+        ub.session.rollback()
+        log.warning("Could not load supplemental book ratings", exc_info=True)
+        return {book_id: {"personal_rating": None, "household_rating": None}
+                for book_id in book_ids}
+
+
 def _rows_to_items(entries, hidden_ids=None, custom_values=None):
     """Serialize one list page after resolving its in-progress ids in bulk."""
     entries = list(entries)
@@ -331,6 +360,7 @@ def _rows_to_items(entries, hidden_ids=None, custom_values=None):
     user_id = _real_user_id()
     page_ids = [int(book.id) for book in books]
     favorite_ids = set()
+    page_ratings = _optional_ratings_for_books(user_id, page_ids)
     if user_id is not None and page_ids:
         try:
             favorite_ids = {int(row[0]) for row in (
@@ -354,11 +384,13 @@ def _rows_to_items(entries, hidden_ids=None, custom_values=None):
         )
         item["shelves"] = shelves_by_book.get(int(book.id), [])
         item["favorited"] = None if favorite_ids is None else int(book.id) in favorite_ids
+        item.update(page_ratings[int(book.id)])
         items.append(item)
     return items
 
 
-def _build_entity_filter(author, series, tag, publisher, language, rating=None, book_format=None):
+def _build_entity_filter(author, series, tag, publisher, language, rating=None, book_format=None,
+                         personal_rating=None):
     """Build an entity db_filter from query params; returns True (no-op) if none supplied.
 
     Only the first supplied entity param is honoured — multiple entity filters
@@ -376,6 +408,8 @@ def _build_entity_filter(author, series, tag, publisher, language, rating=None, 
         parts.append(db.Books.publishers.any(db.Publishers.id == publisher))
     if rating is not None:
         parts.append(db.Books.ratings.any(db.Ratings.id == rating))
+    if personal_rating is not None:
+        parts.append(personal_score(_real_user_id()) == personal_rating)
     if book_format:
         parts.append(db.Books.data.any(db.Data.format == book_format.upper()))
     if language is not None:
@@ -483,10 +517,26 @@ def _catalog_visibility(show_hidden=False, *, allow_archived=False, viewing_tag_
     )
 
 
+def _tag_group_filter(path):
+    if not isinstance(path, str) or not path or len(path) > 4096:
+        raise BookExportRequestError("invalid_request", "Tag group must be bounded text", 400)
+    if not current_user.check_visibility(constants.SIDEBAR_CATEGORY):
+        raise BookExportRequestError("not_found", "Tag group not found", 404)
+    try:
+        return tag_hierarchy.read_tree(calibre_db).book_filter(path)
+    except LookupError:
+        raise BookExportRequestError("not_found", "Tag group not found", 404) from None
+    except (SQLAlchemyError, ValueError, TypeError):
+        raise BookExportRequestError(
+            "service_unavailable", "Tag hierarchy temporarily unavailable. Please try again.", 503
+        ) from None
+
+
 def _catalog_book_query(*, search=None, author_id=None, series_id=None, tag_id=None,
                         publisher_id=None, language_code=None, rating_id=None,
                         book_format=None, filter_val=None, show_hidden=False,
-                        book_ids=None, classic_tag_view=False):
+                        book_ids=None, classic_tag_view=False, personal_rating=None,
+                        tag_path=None):
     """Build one unpaged query for catalog search results and file export.
 
     This is shared by ``/books`` and ``/books/export`` so combined search,
@@ -498,6 +548,12 @@ def _catalog_book_query(*, search=None, author_id=None, series_id=None, tag_id=N
         raise BookExportRequestError(
             "unsupported_source", "The Hot list cannot be exported right now", 400
         )
+
+    if tag_path is not None:
+        # A synthetic group never inherits Classic's exact-tag allowlist
+        # exception or the library's hidden-book recovery mode.
+        classic_tag_view = False
+        show_hidden = False
 
     series_join = (db.books_series_link, db.Books.id == db.books_series_link.c.book, db.Series)
     if search:
@@ -513,7 +569,7 @@ def _catalog_book_query(*, search=None, author_id=None, series_id=None, tag_id=N
         query = query.outerjoin(db.books_series_link, db.Books.id == db.books_series_link.c.book)
         query = query.outerjoin(db.Series)
         query = query.filter(_catalog_visibility(
-            show_hidden, allow_archived=(filter_val == "archived"),
+            show_hidden, allow_archived=(filter_val == "archived" and tag_path is None),
             viewing_tag_id=tag_id if classic_tag_view else None,
         ))
 
@@ -534,7 +590,7 @@ def _catalog_book_query(*, search=None, author_id=None, series_id=None, tag_id=N
                      .filter(ub.FavoriteBook.user_id == int(current_user.id)).all())
         query = query.filter(_export_ids_filter([row[0] for row in favorites]))
     elif filter_val == "rated":
-        query = query.filter(db.Books.ratings.any(db.Ratings.rating > 9))
+        query = query.filter(_top_rated_filter())
     elif filter_val not in (None, "", "all", "read", "unread", "in_progress",
                             "did_not_finish", "on_hold", "discover"):
         raise BookExportRequestError("invalid_filter", "Unsupported book-list filter", 400)
@@ -542,9 +598,12 @@ def _catalog_book_query(*, search=None, author_id=None, series_id=None, tag_id=N
     entity_filter = _build_entity_filter(
         author_id, series_id, tag_id, publisher_id, language_code,
         rating=rating_id, book_format=book_format,
+        personal_rating=personal_rating,
     )
     if entity_filter is not True:
         query = query.filter(entity_filter)
+    if tag_path is not None:
+        query = query.filter(_tag_group_filter(tag_path))
     if filter_val in ("read", "unread", "in_progress", "did_not_finish", "on_hold"):
         query = query.filter(_build_read_filter(filter_val))
     eager_options = [
@@ -793,8 +852,13 @@ def _query_order(sort_key):
 def _catalog_export_query(params, *, classic_tag_view=False):
     params = _export_params_object(params, {
         "search", "filter", "book_ids", "author", "series", "tag", "publisher",
-        "language", "rating", "format", "sort", "show_hidden",
+        "language", "rating", "personal_rating", "format", "sort", "show_hidden", "tag_path",
     }, "Catalog")
+    if "tag_path" in params and (
+        not isinstance(params["tag_path"], str) or not params["tag_path"]
+        or len(params["tag_path"]) > 4096
+    ):
+        raise BookExportRequestError("invalid_request", "Tag group must be bounded text", 400)
     search = params.get("search")
     if search is not None and not isinstance(search, str):
         raise BookExportRequestError("invalid_request", "Search must be text", 400)
@@ -843,12 +907,14 @@ def _catalog_export_query(params, *, classic_tag_view=False):
         publisher_id=_strict_int(params.get("publisher"), "Publisher ID", optional=True),
         language_code=params.get("language"),
         rating_id=_strict_int(params.get("rating"), "Rating ID", optional=True),
+        personal_rating=_personal_rating_param(params.get("personal_rating")),
         book_format=params.get("format"),
         filter_val=filter_val if filter_val not in (None, "", "all") else read_filter,
         show_hidden=(filter_val != "discover" and show_hidden
                      in (True, 1, "1", "true", "yes", "on")),
         book_ids=ids,
         classic_tag_view=classic_tag_view,
+        tag_path=params.get("tag_path"),
     )
     query = _join_sort(query, sort_context)
     if ids is not None:
@@ -981,7 +1047,7 @@ def _manual_shelf_export_query(shelf_id, params):
     sort_key = params.get("sort", "stored")
     if not isinstance(sort_key, str) or len(sort_key) > 32:
         raise BookExportRequestError("invalid_request", "Sort must be a short text value", 400)
-    if sort_key not in ("stored", "recent", "hotasc", "hotdesc", *SORT_MAP):
+    if sort_key not in ("stored", "recent", "hotasc", "hotdesc", *SORT_MAP, *PERSONAL_RATING_SORTS):
         raise BookExportRequestError("invalid_request", "Unsupported shelf sort order", 400)
     if sort_key == "stored" or sort_key in ("hotasc", "hotdesc"):
         order = (ub.BookShelf.order.asc(), db.Books.id.asc())
@@ -1190,31 +1256,41 @@ def list_books():
     author_id = request.args.get("author", type=int)
     series_id = request.args.get("series", type=int)
     tag_id = request.args.get("tag", type=int)
+    tag_path = request.args.get("tag_path")
     publisher_id = request.args.get("publisher", type=int)
     language_code = request.args.get("language")
     rating_id = request.args.get("rating", type=int)
+    try:
+        personal_rating = _personal_rating_param(request.args.get("personal_rating"))
+    except BookExportRequestError as error:
+        return jsonify({"error": {"code": error.code, "message": error.message}}), error.status
     book_format = request.args.get("format")
     filter_val = request.args.get("filter")
     has_entity_filter = any(value not in (None, "") for value in (
-        author_id, series_id, tag_id, publisher_id, language_code, rating_id, book_format,
+        author_id, series_id, tag_id, publisher_id, language_code, rating_id, book_format, personal_rating,
     ))
 
-    if search:
+    if search or tag_path is not None:
         offset = (page - 1) * per_page
-        query = _catalog_book_query(
-            search=search,
-            author_id=author_id,
-            series_id=series_id,
-            tag_id=tag_id,
-            publisher_id=publisher_id,
-            language_code=language_code,
-            rating_id=rating_id,
-            book_format=book_format,
-            filter_val=(filter_val if filter_val in
-                        ("read", "unread", "in_progress", "did_not_finish", "on_hold",
-                         "favorites", "rated", "archived") else None),
-            show_hidden=show_hidden,
-        )
+        try:
+            query = _catalog_book_query(
+                search=search,
+                author_id=author_id,
+                series_id=series_id,
+                tag_id=tag_id,
+                tag_path=tag_path,
+                publisher_id=publisher_id,
+                language_code=language_code,
+                rating_id=rating_id,
+                personal_rating=personal_rating,
+                book_format=book_format,
+                filter_val=(filter_val if tag_path is not None or filter_val in
+                            ("read", "unread", "in_progress", "did_not_finish", "on_hold",
+                             "favorites", "rated", "archived") else None),
+                show_hidden=show_hidden if tag_path is None else False,
+            )
+        except BookExportRequestError as exc:
+            return jsonify({"error": {"code": exc.code, "message": exc.message}}), exc.status
         query = _join_sort(query, sort_context)
         total = query.with_entities(db.Books.id).order_by(None).distinct().count()
         if select_all:
@@ -1308,8 +1384,8 @@ def list_books():
                         "total": pagination.total_count}, sort_context))
 
     if filter_val == "rated" and not has_entity_filter:
-        # Top-rated: Calibre stores rating 0–10 (half-stars); >9 == 5 stars.
-        rated_filter = db.Books.ratings.any(db.Ratings.rating > 9)
+        # Keep the historical five-star threshold, applied to this reader's score.
+        rated_filter = _top_rated_filter()
         entries, _random, pagination = calibre_db.fill_indexpage(
             page, per_page, db.Books, rated_filter, order,
             True, config.config_read_column, *series_join, *custom_join, ids_only=select_all)
@@ -1328,6 +1404,7 @@ def list_books():
             publisher_id=publisher_id,
             language_code=language_code,
             rating_id=rating_id,
+            personal_rating=personal_rating,
             book_format=book_format,
             filter_val=filter_val,
             show_hidden=show_hidden,
@@ -1345,7 +1422,8 @@ def list_books():
 
     # --- entity + read/unread path ---
     entity_filter = _build_entity_filter(author_id, series_id, tag_id, publisher_id, language_code,
-                                         rating=rating_id, book_format=book_format)
+                                         rating=rating_id, book_format=book_format,
+                                         personal_rating=personal_rating)
     read_filter = (_build_read_filter(filter_val)
                    if filter_val in ("read", "unread", "in_progress",
                                      "did_not_finish", "on_hold") else True)
@@ -1559,6 +1637,7 @@ def book_detail(book_id):
         cover_override=user_cover.override_for_user(_real_user_id(), book_id),
     )
     body["in_my_library"] = in_my_library
+    body.update(_optional_ratings_for_books(_real_user_id(), [book_id])[book_id])
     body["accessible_via_public_shelf"] = accessible_via_public_shelf
     source_formats, target_formats = get_convert_options(book)
     body["convert_options"] = {

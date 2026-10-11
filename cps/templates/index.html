@@ -3,6 +3,18 @@
 {% import '_book_organizer.html' as organizer with context %}
 {% block header %}
 <style>
+.tag-group-navigation {
+    margin: 20px 15px;
+    overflow-wrap: anywhere;
+}
+.tag-group-navigation nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+.tag-group-navigation h2 {
+    font-size: 1.25em;
+}
 .shelf-actions {
     display: flex;
     flex-direction: column;
@@ -49,6 +61,24 @@
 </form>
 {% endmacro %}
 {% block body %}
+{% if tag_breadcrumbs is defined %}
+<section class="tag-group-navigation">
+<nav aria-label="{{ _('Breadcrumb') }}">
+  <a href="{{ url_for('web.category_list') }}">{{ _('Tags') }}</a>
+  {% for name, path in tag_breadcrumbs %}
+    <span aria-hidden="true">›</span>
+    <a href="{{ url_for('web.tag_group', path=path) }}" {% if loop.last %}aria-current="page"{% endif %}>{{ name }}</a>
+  {% endfor %}
+</nav>
+{% if tag_subcategories %}
+<div><h2>{{ _('Subtags') }}</h2><ul role="list">
+  {% for child in tag_subcategories %}
+  <li><a href="{{ url_for('web.tag_group', path=child.path) }}">{{ child.name }} <span class="badge">{{ child.total_count }}</span></a></li>
+  {% endfor %}
+</ul></div>
+{% endif %}
+</section>
+{% endif %}
 {% if breadcrumbs %}
   {% from 'macros/hierarchy.html' import hierarchy_breadcrumbs %}
   <div class="discover">
@@ -130,18 +160,9 @@
           ({{entry.Books.series_index|formatfloat(2)}})
         </p>
         {% endif %}
-        {% if entry.Books.ratings.__len__() > 0 %}
-        <div class="rating">
-          {% for number in range((entry.Books.ratings[0].rating/2)|int(2)) %}
-            <span class="glyphicon glyphicon-star good"></span>
-            {% if loop.last and loop.index < 5 %}
-              {% for numer in range(5 - loop.index) %}
-                <span class="glyphicon glyphicon-star-empty"></span>
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-        </div>
-        {% endif %}
+        {% with library_rating=entry.Books.ratings[0].rating if entry.Books.ratings else 0 %}
+          {% include 'library_rating.html' %}
+        {% endwith %}
       </div>
     </div>
     {% endfor %}
@@ -304,18 +325,9 @@
           ({{entry.Books.series_index|formatfloat(2)}})
         </p>
         {% endif %}
-        {% if entry.Books.ratings.__len__() > 0 %}
-        <div class="rating">
-          {% for number in range((entry.Books.ratings[0].rating/2)|int(2)) %}
-            <span class="glyphicon glyphicon-star good"></span>
-            {% if loop.last and loop.index < 5 %}
-              {% for numer in range(5 - loop.index) %}
-                <span class="glyphicon glyphicon-star-empty"></span>
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-        </div>
-        {% endif %}
+        {% with library_rating=entry.Books.ratings[0].rating if entry.Books.ratings else 0 %}
+          {% include 'library_rating.html' %}
+        {% endwith %}
       </div>
     </div>
     {% endfor %}
